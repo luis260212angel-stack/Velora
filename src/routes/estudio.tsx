@@ -71,6 +71,8 @@ function StudioGate({ onUnlock }: { onUnlock: () => void }) {
       }
       toast.success("Estudio abierto");
       onUnlock();
+    } catch {
+      toast.error("No se pudo abrir el estudio. Recarga e inténtalo de nuevo.");
     } finally {
       setBusy(false);
     }
