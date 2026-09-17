@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-ivory: #f4efe8;
+  --color-cream: #e8dfd3;
+  --color-sand: #c4b5a0;
+  --color-ink: #161412;
+  --color-ink-soft: #3a342e;
+  --color-muted: #7a7268;
+  --color-terracotta: #8b3a2a;
+  --color-terracotta-deep: #6e2c20;
+  --color-line: #d9cfc2;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-lg: 1rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+.hero-frame {
+  min-height: calc(100svh - 4.5rem);
+}
+
+.hero-veil {
+  background: linear-gradient(
+    to top,
+    rgb(22 20 18 / 0.7) 0%,
+    rgb(22 20 18 / 0.28) 48%,
+    rgb(22 20 18 / 0.1) 100%
+  );
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+.aspect-lookbook {
+  aspect-ratio: 3 / 2;
+}
+
+.dialog-panel {
+  width: min(92vw, 40rem);
+  max-height: 90svh;
+}
+
+.map-grid {
+  background-color: var(--color-cream);
+  background-image:
+    linear-gradient(to right, rgb(139 58 42 / 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(139 58 42 / 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+
