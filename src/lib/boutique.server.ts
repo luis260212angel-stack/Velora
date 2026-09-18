@@ -13,7 +13,11 @@ const DEFAULT_PASSWORD = "velora";
 const SESSION_MS = 12 * 60 * 60 * 1000;
 
 function ephemeral() {
-  return process.env.VERCEL === "1" && !process.env.DATABASE_URL?.trim();
+  const url =
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL?.trim() ||
+    process.env.POSTGRES_PRISMA_URL?.trim();
+  return process.env.VERCEL === "1" && !url;
 }
 
 type LockRow = {
