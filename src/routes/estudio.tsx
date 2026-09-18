@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
 import { ImageField } from "@/components/image-field";
@@ -21,7 +21,7 @@ import {
   unlockStudio,
 } from "@/lib/boutique-api";
 import { useBoutiqueQuery, useInvalidateBoutique } from "@/lib/boutique";
-import { BANNER_THEMES, emptyProduct, SOCIAL_PRESETS } from "@/lib/catalog";
+import { BANNER_THEMES, emptyProduct, SOCIAL_PRESETS, SEED_STATE } from "@/lib/catalog";
 import { formatPrice, formatWhen } from "@/lib/format";
 import type { BoutiqueState, Product, SocialLink } from "@/lib/types";
 
@@ -35,19 +35,30 @@ function Estudio() {
   });
   const [opened, setOpened] = useState(false);
   const unlocked = opened || statusQuery.data?.unlocked === true;
-  const live = boutiqueQuery.data;
+  const live = boutiqueQuery.data ?? SEED_STATE;
   const [draft, setDraft] = useState<BoutiqueState | null>(null);
+  const catalog = draft ?? live;
 
-  useEffect(() => {
-    if (unlocked && live && !draft) setDraft(structuredClone(live));
-  }, [unlocked, live, draft]);
-
-  if (statusQuery.isLoading) {
-    return <StudioFrame>Abriendo el estudio…</StudioFrame>;
+  if (!unlocked) {
+    if (statusQuery.isLoading) {
+      return <StudioFrame>Abriendo el estudio…</StudioFrame>;
+    }
+    return (
+      <StudioGate
+        onUnlock={() => {
+          setDraft(structuredClone(live));
+          setOpened(true);
+        }}
+      />
+    );
   }
-  if (!unlocked) return <StudioGate onUnlock={() => setOpened(true)} />;
-  if (!draft) return <StudioFrame>Cargando el catálogo…</StudioFrame>;
-  return <StudioWorkspace draft={draft} setDraft={setDraft} />;
+
+  return (
+    <StudioWorkspace
+      draft={catalog}
+      setDraft={(next) => setDraft(next)}
+    />
+  );
 }
 
 function StudioFrame({ children }: { children: React.ReactNode }) {

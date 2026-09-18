@@ -11,7 +11,7 @@ export function AppQueryProvider({ children }: { children: ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 8_000, refetchOnWindowFocus: false },
+          queries: { staleTime: 8_000, refetchOnWindowFocus: false, retry: 1 },
         },
       }),
   );
@@ -22,6 +22,7 @@ export function BoutiqueProvider({ children }: { children: ReactNode }) {
   const query = useQuery({
     queryKey: ["boutique"],
     queryFn: () => getBoutique(),
+    placeholderData: SEED_STATE,
   });
   const value = query.data ?? SEED_STATE;
   return <BoutiqueContext.Provider value={value}>{children}</BoutiqueContext.Provider>;
@@ -35,6 +36,7 @@ export function useBoutiqueQuery() {
   return useQuery({
     queryKey: ["boutique"],
     queryFn: () => getBoutique(),
+    placeholderData: SEED_STATE,
   });
 }
 

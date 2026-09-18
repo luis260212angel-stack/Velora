@@ -12,6 +12,10 @@ const COOKIE = "velora_studio";
 const DEFAULT_PASSWORD = "velora";
 const SESSION_MS = 12 * 60 * 60 * 1000;
 
+function ephemeral() {
+  return process.env.VERCEL === "1" && !process.env.DATABASE_URL?.trim();
+}
+
 type LockRow = {
   password_hash: string;
   session_token_hash: string | null;
@@ -144,6 +148,7 @@ function writeSessionCookie(token: string | null) {
 }
 
 async function ensureSeed() {
+  if (ephemeral()) return;
   const sql = await getSql();
   const lock = await sql.query<LockRow>("select password_hash from studio_lock where id = $1", [
     LOCK_ID,
@@ -170,17 +175,24 @@ async function ensureSeed() {
 }
 
 export async function loadBoutique(): Promise<BoutiqueState> {
-  await ensureSeed();
-  const sql = await getSql();
-  const rows = await sql.query<StateRow>("select data from boutique_state where id = $1", [
-    STATE_ID,
-  ]);
-  return normalizeBoutique(json(rows[0]?.data));
+  if (ephemeral()) return normalizeBoutique(SEED_STATE);
+  try {
+    await ensureSeed();
+    const sql = await getSql();
+    const rows = await sql.query<StateRow>("select data from boutique_state where id = $1", [
+      STATE_ID,
+    ]);
+    return normalizeBoutique(json(rows[0]?.data));
+  } catch (err) {
+    console.error("[boutique] load failed", err);
+    return normalizeBoutique(SEED_STATE);
+  }
 }
 
 export async function saveBoutiqueState(state: BoutiqueState) {
-  const sql = await getSql();
   const next = normalizeBoutique(state);
+  if (ephemeral()) return next;
+  const sql = await getSql();
   await sql.query(
     "update boutique_state set data = $2::jsonb, updated_at = now() where id = $1",
     [STATE_ID, JSON.stringify(next)],
@@ -189,6 +201,8 @@ export async function saveBoutiqueState(state: BoutiqueState) {
 }
 
 export async function getStats(): Promise<BoutiqueStats> {
+  const empty = { uniqueVisitors: 0, pageViews: 0, cartAdds: 0, whatsappOrders: 0 };
+  if (ephemeral()) return empty;
   await ensureSeed();
   const sql = await getSql();
   const visitors = await sql.query<CountRow>("select count(*)::int as n from page_visits");
@@ -208,6 +222,7 @@ export async function getStats(): Promise<BoutiqueStats> {
 }
 
 export async function listOrderIntents(): Promise<OrderIntent[]> {
+  if (ephemeral()) return [];
   await ensureSeed();
   const sql = await getSql();
   const rows = await sql.query<IntentRow>(
@@ -225,6 +240,7 @@ export async function listOrderIntents(): Promise<OrderIntent[]> {
 
 export async function recordVisit(visitorKey: string) {
   if (!visitorKey || visitorKey.length > 80) return { ok: true };
+  if (ephemeral()) return { ok: true };
   await ensureSeed();
   const sql = await getSql();
   await sql.query(
@@ -238,6 +254,7 @@ export async function recordVisit(visitorKey: string) {
 }
 
 export async function recordCartAdd() {
+  if (ephemeral()) return { ok: true };
   await ensureSeed();
   const sql = await getSql();
   await sql.query(
@@ -251,6 +268,7 @@ export async function recordOrderIntent(input: {
   items: OrderIntent["items"];
   total: number;
 }) {
+  if (ephemeral()) return { ok: true, id: crypto.randomUUID() };
   await ensureSeed();
   const sql = await getSql();
   const id = crypto.randomUUID();
@@ -262,7 +280,12 @@ export async function recordOrderIntent(input: {
 }
 
 export async function studioStatus() {
-  await ensureSeed();
+  if (ephemeral()) return { unlocked: await hasStudioSession() };
+  try {
+    await ensureSeed();
+  } catch (err) {
+    console.error("[studio] status seed failed", err);
+  }
   const unlocked = await hasStudioSession();
   return { unlocked };
 }
